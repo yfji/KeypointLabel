@@ -67,6 +67,10 @@ void MainWindow::on_btn_open_img_clicked()
         int pos=strFileName.rfind("/");
         std::string tmp=strFileName;
         parentDir=tmp.replace(pos, strFileName.length()-pos, "");
+        char lastChar=parentDir[parentDir.length()-1];
+        if(lastChar!='/' && lastChar!='\\'){
+            parentDir=parentDir+"/";
+        }
         ptrLabel->setFileNames({strFileName.replace(0,pos+1,"")});
         imgPathValid=1;
     }
@@ -105,6 +109,10 @@ void MainWindow::on_btn_open_dir_clicked()
             //std::cout<<file.toStdString()<<std::endl;
         }
         parentDir=file_path.toStdString();
+        char lastChar=parentDir[parentDir.length()-1];
+        if(lastChar!='/' && lastChar!='\\'){
+            parentDir=parentDir+"/";
+        }
         ptrLabel->setFileNames(strFileNames);
         imgPathValid=1;
     }
@@ -121,19 +129,14 @@ void MainWindow::on_btn_start_label_clicked()
         QMessageBox::warning(this,tr("Warning"),tr("Please select image/image dir/image list"),QMessageBox::Ok);
         return;
     }
+    if(imageIndex==totalFiles){
+        QMessageBox::warning(this,tr("Warning"),tr("You have labeled all images"),QMessageBox::Ok);
+        return;
+    }
     std::string cur_filename=ptrLabel->getName(imageIndex);
-    std::string fullPath;
-    char lastChar=parentDir[parentDir.length()-1];
-    if(lastChar!='/' && lastChar!='\\'){
-        parentDir=parentDir+"/";
-        fullPath=parentDir+cur_filename;
-    }
-    else{
-        fullPath=parentDir+cur_filename;
-    }
-    std::cout<<fullPath<<std::endl;
+
     ui->label_image->imgLoaded=1;
-    cv::Mat tmp=cv::imread(fullPath);
+    cv::Mat tmp=cv::imread(parentDir+cur_filename);
     imgScale=ptrLabel->adjust(tmp, curImage, cv::Size(imgLabelW, imgLabelH));
     cv::cvtColor(curImage, curImage, cv::COLOR_BGR2RGB);
     copyImage=curImage.clone();
@@ -146,9 +149,15 @@ void MainWindow::on_btn_end_label_clicked()
         QMessageBox::warning(this,tr("Warning"),tr("Please select image/image dir/image list"),QMessageBox::Ok);
         return;
     }
+    if(imageIndex==totalFiles){
+        QMessageBox::warning(this,tr("Warning"),tr("You have labeled all images"),QMessageBox::Ok);
+        return;
+    }
     std::string name=ptrLabel->getName(imageIndex);
     std::string tmp=name;
-    std::string label_file=tmp.replace(name.find(".jpg"), 4, ".txt");
+    int pos=name.rfind(".");
+    int postfixLen=name.length()-pos;
+    std::string label_file=tmp.replace(pos, postfixLen, ".txt");
     std::stringstream ss;
     ss<<imageIndex+1<<" / "<<totalFiles;
     ui->txt_prog_image->setText(tr(ss.str().c_str()));
@@ -213,10 +222,10 @@ void MainWindow::on_btn_view_clicked()
         return;
     }
     std::string name=ptrLabel->getName(imageIndex);
-    char lastChar=parentDir[parentDir.length()-1];
-    if(lastChar!='/' && lastChar!='\\'){
-        parentDir=parentDir+"/";
-    }
+    //char lastChar=parentDir[parentDir.length()-1];
+    //if(lastChar!='/' && lastChar!='\\'){
+    //    parentDir=parentDir+"/";
+    //}
     cv::Mat canvas=cv::imread(parentDir+name);
     std::vector<Keypoint> points=ptrLabel->getOriginPoints();
     int count=ui->label_image->getLabeledCount();
