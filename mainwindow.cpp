@@ -208,10 +208,19 @@ void MainWindow::on_btn_view_clicked()
         QMessageBox::warning(this,tr("Warning"),tr("Please select image/image dir/image list"),QMessageBox::Ok);
         return;
     }
+    if(imageIndex==totalFiles){
+        QMessageBox::warning(this,tr("Warning"),tr("You have labeled all images"),QMessageBox::Ok);
+        return;
+    }
     std::string name=ptrLabel->getName(imageIndex);
+    char lastChar=parentDir[parentDir.length()-1];
+    if(lastChar!='/' && lastChar!='\\'){
+        parentDir=parentDir+"/";
+    }
     cv::Mat canvas=cv::imread(parentDir+name);
     std::vector<Keypoint> points=ptrLabel->getOriginPoints();
-    for(int i=0;i<num_parts;++i){
+    int count=ui->label_image->getLabeledCount();
+    for(int i=0;i<count;++i){
         Keypoint& kpt=points[i];
         cv::circle(canvas, kpt.pos, radius, cv::Scalar(0,0,255), -1);
     }
